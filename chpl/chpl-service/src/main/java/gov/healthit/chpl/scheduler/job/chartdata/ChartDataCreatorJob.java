@@ -17,8 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
 import gov.healthit.chpl.dao.search.CertifiedProductSearchDAO;
-import gov.healthit.chpl.dao.statistics.NonconformityTypeStatisticsDAO;
-import gov.healthit.chpl.dao.statistics.SurveillanceStatisticsDAO;
 import gov.healthit.chpl.domain.CertifiedProductSearchDetails;
 import gov.healthit.chpl.domain.search.CertifiedProductFlatSearchResult;
 import gov.healthit.chpl.dto.IncumbentDevelopersStatisticsDTO;
@@ -30,7 +28,7 @@ import gov.healthit.chpl.scheduler.job.QuartzJob;
 /**
  * This is the starting point for populating statistics tables that will be used
  * for the charts. As new tables need to be populated, they will be added here.
- * 
+ *
  * @author TYoung
  *
  */
@@ -42,14 +40,10 @@ public final class ChartDataCreatorJob extends QuartzJob {
 
     @Autowired
     private CertifiedProductSearchDAO certifiedProductSearchDAO;
-    @Autowired
-    private SurveillanceStatisticsDAO statisticsDAO;
-    @Autowired
-    private NonconformityTypeStatisticsDAO nonconformityTypeStatisticsDAO;
 
     /**
      * Constructor to initialize InheritanceErrorsReportCreatorJob object.
-     * 
+     *
      * @throws Exception
      *             is thrown
      */
@@ -74,20 +68,21 @@ public final class ChartDataCreatorJob extends QuartzJob {
 
     @Override
     @Transactional
-    public void execute(JobExecutionContext arg0) throws JobExecutionException {
-    	SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
+    public void execute(final JobExecutionContext arg0) throws JobExecutionException {
+        SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
         List<CertifiedProductFlatSearchResult> certifiedProducts = certifiedProductSearchDAO.getAllCertifiedProducts();
         LOGGER.info("Certified Product Count: " + certifiedProducts.size());
 
         analyzeSed(certifiedProducts);
-        //analyzeProducts(certifiedProducts);
-        //analyzeDevelopers(certifiedProducts);
-        //analyzeListingCounts(certifiedProducts);
+        analyzeProducts(certifiedProducts);
+        analyzeDevelopers(certifiedProducts);
+        analyzeListingCounts(certifiedProducts);
         analyzeNonconformity();
     }
 
     private static void analyzeDevelopers(final List<CertifiedProductFlatSearchResult> listings) {
-        IncumbentDevelopersStatisticsCalculator incumbentDevelopersStatisticsCalculator = new IncumbentDevelopersStatisticsCalculator();
+        IncumbentDevelopersStatisticsCalculator incumbentDevelopersStatisticsCalculator =
+                new IncumbentDevelopersStatisticsCalculator();
         List<IncumbentDevelopersStatisticsDTO> dtos = incumbentDevelopersStatisticsCalculator.getCounts(listings);
         incumbentDevelopersStatisticsCalculator.logCounts(dtos);
         incumbentDevelopersStatisticsCalculator.save(dtos);
@@ -112,7 +107,8 @@ public final class ChartDataCreatorJob extends QuartzJob {
     private static void analyzeProducts(final List<CertifiedProductFlatSearchResult> listings) {
         CriterionProductDataFilter criterionProductDataFilter = new CriterionProductDataFilter();
         List<CertifiedProductFlatSearchResult> filteredListings = criterionProductDataFilter.filterData(listings);
-        CriterionProductStatisticsCalculator criterionProductStatisticsCalculator = new CriterionProductStatisticsCalculator();
+        CriterionProductStatisticsCalculator criterionProductStatisticsCalculator =
+                new CriterionProductStatisticsCalculator();
         Map<String, Long> productCounts = criterionProductStatisticsCalculator.getCounts(filteredListings);
         criterionProductStatisticsCalculator.logCounts(productCounts);
         criterionProductStatisticsCalculator.save(productCounts);
@@ -123,23 +119,28 @@ public final class ChartDataCreatorJob extends QuartzJob {
         // Get Certified Products
         SedDataCollector sedDataCollector = new SedDataCollector();
         List<CertifiedProductSearchDetails> seds = sedDataCollector.retreiveData(listings);
-        
+
         LOGGER.info("Collected SED Data");
 
         // Extract SED Statistics
-        SedParticipantsStatisticCountCalculator sedParticipantsStatisticCountCalculator = new SedParticipantsStatisticCountCalculator();
+        SedParticipantsStatisticCountCalculator sedParticipantsStatisticCountCalculator =
+                new SedParticipantsStatisticCountCalculator();
         sedParticipantsStatisticCountCalculator.run(seds);
 
-        ParticipantGenderStatisticsCalculator participantGenderStatisticsCalculator = new ParticipantGenderStatisticsCalculator();
+        ParticipantGenderStatisticsCalculator participantGenderStatisticsCalculator =
+                new ParticipantGenderStatisticsCalculator();
         participantGenderStatisticsCalculator.run(seds);
 
-        ParticipantAgeStatisticsCalculator participantAgeStatisticsCalculator = new ParticipantAgeStatisticsCalculator();
+        ParticipantAgeStatisticsCalculator participantAgeStatisticsCalculator =
+                new ParticipantAgeStatisticsCalculator();
         participantAgeStatisticsCalculator.run(seds);
 
-        ParticipantEducationStatisticsCalculator participantEducationStatisticsCalculator = new ParticipantEducationStatisticsCalculator();
+        ParticipantEducationStatisticsCalculator participantEducationStatisticsCalculator =
+                new ParticipantEducationStatisticsCalculator();
         participantEducationStatisticsCalculator.run(seds);
 
-        ParticipantExperienceStatisticsCalculator participantProfExperienceStatisticsCalculator = new ParticipantExperienceStatisticsCalculator();
+        ParticipantExperienceStatisticsCalculator participantProfExperienceStatisticsCalculator =
+                new ParticipantExperienceStatisticsCalculator();
 
         participantProfExperienceStatisticsCalculator.run(seds, ExperienceType.COMPUTER_EXPERIENCE);
         participantProfExperienceStatisticsCalculator.run(seds, ExperienceType.PRODUCT_EXPERIENCE);
