@@ -21,7 +21,7 @@ import gov.healthit.chpl.scheduler.SchedulerCertifiedProductSearchDetailsAsync;
  * Retrieves all of the 2015 SED Products and their details. Details are
  * retrieved asynchronously according to the chartDataExecutor defined in
  * AppConfig.
- * 
+ *
  * @author TYoung
  *
  */
@@ -33,7 +33,7 @@ public class SedDataCollector {
     private CertifiedProductDetailsManager certifiedProductDetailsManager;
 
     @Autowired
-    private SchedulerCertifiedProductSearchDetailsAsync cpsdAsync;
+    private SchedulerCertifiedProductSearchDetailsAsync schedulerCertifiedProductSearchDetailsAsync;
 
     public SedDataCollector() {
         SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
@@ -42,7 +42,7 @@ public class SedDataCollector {
     /**
      * This method runs the data retrieval process for the 2015 SED products and
      * their details.
-     * 
+     *
      * @param listings
      *            initial set of Listings
      * @return List of CertifiedProductSearchDetails
@@ -52,8 +52,8 @@ public class SedDataCollector {
         List<CertifiedProductFlatSearchResult> certifiedProducts = filterData(listings);
         LOGGER.info("2015/SED Certified Product Count: " + certifiedProducts.size());
 
-        List<CertifiedProductSearchDetails> certifiedProductsWithDetails = getCertifiedProductDetailsForAll(
-                certifiedProducts);
+        List<CertifiedProductSearchDetails> certifiedProductsWithDetails =
+                getCertifiedProductDetailsForAll(certifiedProducts);
 
         return certifiedProductsWithDetails;
     }
@@ -78,11 +78,10 @@ public class SedDataCollector {
 
         for (CertifiedProductFlatSearchResult certifiedProduct : certifiedProducts) {
             try {
-                if (certifiedProduct.getId() > 9600) {
-                    System.out.println("Creating future for listing id " + certifiedProduct.getId());
-                    futures.add(cpsdAsync.getCertifiedProductDetail(certifiedProduct.getId(),
-                            certifiedProductDetailsManager));
-                }
+                futures.add(schedulerCertifiedProductSearchDetailsAsync
+                        .getCertifiedProductDetail(certifiedProduct.getId(),
+                        certifiedProductDetailsManager));
+
             } catch (EntityRetrievalException e) {
                 LOGGER.error("Could not retrieve certified product details for id: " + certifiedProduct.getId(), e);
             }
@@ -91,8 +90,6 @@ public class SedDataCollector {
         Date startTime = new Date();
         for (Future<CertifiedProductSearchDetails> future : futures) {
             try {
-                CertifiedProductSearchDetails currDetails = future.get();
-                System.out.println("Got future for CHPL product number " + currDetails.getChplProductNumber());
                 details.add(future.get());
             } catch (InterruptedException | ExecutionException e) {
                 LOGGER.error("Could not retrieve certified product details for unknown id.", e);
