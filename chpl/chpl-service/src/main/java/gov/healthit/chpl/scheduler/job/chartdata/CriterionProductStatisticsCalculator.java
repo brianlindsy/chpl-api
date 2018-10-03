@@ -32,6 +32,7 @@ public class CriterionProductStatisticsCalculator {
 
     @Autowired
     private CertificationCriterionDAO certificationCriterionDAO;
+    @Autowired
     private CriterionProductStatisticsDAO criterionProductStatisticsDAO;
     
     public CriterionProductStatisticsCalculator() {
