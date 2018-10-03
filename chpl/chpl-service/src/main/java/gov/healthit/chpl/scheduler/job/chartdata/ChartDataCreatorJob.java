@@ -34,7 +34,7 @@ import gov.healthit.chpl.scheduler.job.QuartzJob;
  */
 @DisallowConcurrentExecution
 public final class ChartDataCreatorJob extends QuartzJob {
-    private static final Logger LOGGER = LogManager.getLogger(ChartDataCreatorJob.class);
+    private static final Logger LOGGER = LogManager.getLogger("chartDataCreatorJobLogger");
     private static final String DEFAULT_PROPERTIES_FILE = "environment.properties";
     private Properties props;
 
@@ -53,8 +53,8 @@ public final class ChartDataCreatorJob extends QuartzJob {
     }
 
     private Properties loadProperties() throws IOException {
-        InputStream in = BrokenSurveillanceRulesCreatorJob.class.getClassLoader().getResourceAsStream(
-                DEFAULT_PROPERTIES_FILE);
+        InputStream in = BrokenSurveillanceRulesCreatorJob.class.getClassLoader()
+                .getResourceAsStream(DEFAULT_PROPERTIES_FILE);
         if (in == null) {
             props = null;
             throw new FileNotFoundException("Environment Properties File not found in class path.");
@@ -69,6 +69,7 @@ public final class ChartDataCreatorJob extends QuartzJob {
     @Override
     @Transactional
     public void execute(final JobExecutionContext arg0) throws JobExecutionException {
+        LOGGER.info("*****Chart Data Generator is startin now.*****");
         SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
         List<CertifiedProductFlatSearchResult> certifiedProducts = certifiedProductSearchDAO.getAllCertifiedProducts();
         LOGGER.info("Certified Product Count: " + certifiedProducts.size());
@@ -78,6 +79,8 @@ public final class ChartDataCreatorJob extends QuartzJob {
         analyzeDevelopers(certifiedProducts);
         analyzeListingCounts(certifiedProducts);
         analyzeNonconformity();
+
+        LOGGER.info("*****Chart Data Generator is done running.*****");
     }
 
     private static void analyzeDevelopers(final List<CertifiedProductFlatSearchResult> listings) {
@@ -112,7 +115,6 @@ public final class ChartDataCreatorJob extends QuartzJob {
         Map<String, Long> productCounts = criterionProductStatisticsCalculator.getCounts(filteredListings);
         criterionProductStatisticsCalculator.logCounts(productCounts);
         criterionProductStatisticsCalculator.save(productCounts);
-
     }
 
     private static void analyzeSed(final List<CertifiedProductFlatSearchResult> listings) {

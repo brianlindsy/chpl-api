@@ -26,7 +26,7 @@ import gov.healthit.chpl.scheduler.SchedulerCertifiedProductSearchDetailsAsync;
  *
  */
 public class SedDataCollector {
-    private static final Logger LOGGER = LogManager.getLogger(SedDataCollector.class);
+    private static final Logger LOGGER = LogManager.getLogger("chartDataCreatorJobLogger");
     private static final String EDITION_2015 = "2015";
 
     @Autowired
